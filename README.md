@@ -13,7 +13,7 @@ To build all projects:
 make all
 ```
 
-Project builds all go inside the `bin` directory, to clean it run:
+Project builds all go inside a `bin` directory, to clean it run:
 ```
 make clean
 ```
