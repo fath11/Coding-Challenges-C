@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
 int countChar(char buffer[], FILE *stream);
@@ -58,17 +59,11 @@ int countChar(char buffer[], FILE *stream) {
 
 int countLine(char buffer[], FILE *stream) {
   int output = 0;
-  while (fgets(buffer, sizeof(*buffer), stream) != NULL) {
-    for (int i = 0; i < sizeof(*buffer); i++) {
-      switch (buffer[i]) {
-        case ' ':
-        case '\0':
-        case '\n':
-        case '\t':
-        case '\r':
-        case '\v':
-        case '\f':
-          output++;
+  int count = 0;
+  while ((count = fread(buffer, 1, sizeof(*buffer), stream))) {
+    for (int i = 0; i < count; i++) {
+      if (buffer[i] == '\n') {
+        output++;
       }
     }
   }
@@ -78,12 +73,27 @@ int countLine(char buffer[], FILE *stream) {
 int countWord(char buffer[], FILE *stream) {
   int output = 0;
   int count = 0;
+  bool found_whitespace = true;
   while ((count = fread(buffer, 1, sizeof(*buffer), stream))) {
     for (int i = 0; i < count; i++) {
-      if (buffer[i] == ' ') {
-        output++;
+      switch (buffer[i]) {
+        case ' ':
+        case '\n':
+        case '\t':
+        case '\r':
+        case '\v':
+        case '\f':
+          found_whitespace = true;
+          break;
+        default:
+          if (found_whitespace == true) {
+            output++;
+          }
+          found_whitespace = false;
+          break;
       }
     }
   }
+  
   return output;
 }
