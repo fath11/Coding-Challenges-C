@@ -4,6 +4,7 @@
 
 int countChar(char buffer[], FILE *stream);
 int countLine(char buffer[], FILE *stream);
+int countWord(char buffer[], FILE *stream);
 
 /*
  * https://www.ibm.com/docs/en/i/7.6.0?topic=functions-main-function
@@ -33,6 +34,9 @@ int main(int argc, char *argv[]) {
   case 'l':
     printf("%d %s\n", countLine(fileBuffer, fileStream), filePath);
     break;
+  case 'w':
+    printf("%d %s\n", countWord(fileBuffer, fileStream), filePath);
+    break;
   default:
     printf("Invalid flag: %c", flag);
     fclose(fileStream);
@@ -54,10 +58,29 @@ int countChar(char buffer[], FILE *stream) {
 
 int countLine(char buffer[], FILE *stream) {
   int output = 0;
+  while (fgets(buffer, sizeof(*buffer), stream) != NULL) {
+    for (int i = 0; i < sizeof(*buffer); i++) {
+      switch (buffer[i]) {
+        case ' ':
+        case '\0':
+        case '\n':
+        case '\t':
+        case '\r':
+        case '\v':
+        case '\f':
+          output++;
+      }
+    }
+  }
+  return output;
+}
+
+int countWord(char buffer[], FILE *stream) {
+  int output = 0;
   int count = 0;
   while ((count = fread(buffer, 1, sizeof(*buffer), stream))) {
     for (int i = 0; i < count; i++) {
-      if (buffer[i] == '\n') {
+      if (buffer[i] == ' ') {
         output++;
       }
     }
