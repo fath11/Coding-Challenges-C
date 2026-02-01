@@ -1,11 +1,12 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 
-int countChar(char buffer[], FILE *stream);
+int countByte(char buffer[], FILE *stream);
 int countLine(char buffer[], FILE *stream);
 int countWord(char buffer[], FILE *stream);
+int countChar(char buffer[], FILE *stream);
 
 /*
  * https://www.ibm.com/docs/en/i/7.6.0?topic=functions-main-function
@@ -30,13 +31,16 @@ int main(int argc, char *argv[]) {
 
   switch (flag) {
   case 'c':
-    printf("%d %s\n", countChar(fileBuffer, fileStream), filePath);
+    printf("%d %s\n", countByte(fileBuffer, fileStream), filePath);
     break;
   case 'l':
     printf("%d %s\n", countLine(fileBuffer, fileStream), filePath);
     break;
   case 'w':
     printf("%d %s\n", countWord(fileBuffer, fileStream), filePath);
+    break;
+  case 'm':
+    printf("%d %s\n", countChar(fileBuffer, fileStream), filePath);
     break;
   default:
     printf("Invalid flag: %c", flag);
@@ -48,7 +52,7 @@ int main(int argc, char *argv[]) {
   return EXIT_SUCCESS;
 }
 
-int countChar(char buffer[], FILE *stream) {
+int countByte(char buffer[], FILE *stream) {
   int output = 0;
   int count = 0;
   while ((count = fread(buffer, 1, sizeof(*buffer), stream))) {
@@ -77,23 +81,45 @@ int countWord(char buffer[], FILE *stream) {
   while ((count = fread(buffer, 1, sizeof(*buffer), stream))) {
     for (int i = 0; i < count; i++) {
       switch (buffer[i]) {
-        case ' ':
-        case '\n':
-        case '\t':
-        case '\r':
-        case '\v':
-        case '\f':
-          found_whitespace = true;
-          break;
-        default:
-          if (found_whitespace == true) {
-            output++;
-          }
-          found_whitespace = false;
-          break;
+      case ' ':
+      case '\n':
+      case '\t':
+      case '\r':
+      case '\v':
+      case '\f':
+        found_whitespace = true;
+        break;
+      default:
+        if (found_whitespace == true) {
+          output++;
+        }
+        found_whitespace = false;
+        break;
       }
     }
   }
-  
+
+  return output;
+}
+
+// This stupid peice of shit is not accurate and I cannot for the life of me figure out why
+// Please yell at me about how stupid my code is so I can fix it and sleep at night
+int countChar(char buffer[], FILE *stream) {
+  int output = 0;
+  int count = 0;
+  bool is_in_multibyte = false;
+  while ((count = fread(buffer, 1, sizeof(*buffer), stream))) {
+    for (int i = 0; i < count; i++) {
+      if ((buffer[i] >> 7 == 0b0)) {
+        is_in_multibyte = false;
+        output++;
+      } else {
+        if (is_in_multibyte == false) {
+          output++;
+        }
+        is_in_multibyte = true;
+      }
+    }
+  }
   return output;
 }
